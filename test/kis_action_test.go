@@ -3,6 +3,8 @@ package test
 import (
 	"context"
 	"fmt"
+	"gopkg.in/yaml.v3"
+	"os"
 	"testing"
 
 	"github.com/aceld/kis-flow/file"
@@ -13,7 +15,13 @@ func TestActionAbort(t *testing.T) {
 	ctx := context.Background()
 
 	// 1. Load the configuration file and build the Flow
-	if err := file.ConfigImportYaml("load_conf/"); err != nil {
+	wd, _ := os.Getwd()
+	if err := file.ConfigImport(wd+"/load_conf/", func(suffix string) bool {
+		if suffix != ".yml" && suffix != ".yaml" {
+			return false
+		}
+		return true
+	}, yaml.Unmarshal); err != nil {
 		fmt.Println("Wrong Config Yaml Path!")
 		panic(err)
 	}
@@ -36,7 +44,12 @@ func TestActionDataReuse(t *testing.T) {
 	ctx := context.Background()
 
 	// 1. Load the configuration file and build the Flow
-	if err := file.ConfigImportYaml("load_conf/"); err != nil {
+	if err := file.ConfigImport("load_conf/", func(suffix string) bool {
+		if suffix != ".yml" && suffix != ".yaml" {
+			return false
+		}
+		return true
+	}, yaml.Unmarshal); err != nil {
 		fmt.Println("Wrong Config Yaml Path!")
 		panic(err)
 	}
@@ -59,7 +72,12 @@ func TestActionForceEntry(t *testing.T) {
 	ctx := context.Background()
 
 	// 1. Load the configuration file and build the Flow
-	if err := file.ConfigImportYaml("load_conf/"); err != nil {
+	if err := file.ConfigImport("load_conf/", func(suffix string) bool {
+		if suffix != ".yml" && suffix != ".yaml" {
+			return false
+		}
+		return true
+	}, yaml.Unmarshal); err != nil {
 		fmt.Println("Wrong Config Yaml Path!")
 		panic(err)
 	}
@@ -82,7 +100,12 @@ func TestActionJumpFunc(t *testing.T) {
 	ctx := context.Background()
 
 	// 1. Load the configuration file and build the Flow
-	if err := file.ConfigImportYaml("load_conf/"); err != nil {
+	if err := file.ConfigImport("load_conf/", func(suffix string) bool {
+		if suffix != ".yml" && suffix != ".yaml" {
+			return false
+		}
+		return true
+	}, yaml.Unmarshal); err != nil {
 		fmt.Println("Wrong Config Yaml Path!")
 		panic(err)
 	}

@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path"
 	"path/filepath"
@@ -11,8 +12,10 @@ import (
 	"github.com/aceld/kis-flow/flow"
 	"github.com/aceld/kis-flow/kis"
 	"github.com/aceld/kis-flow/metrics"
-	yaml "gopkg.in/yaml.v2"
 )
+
+type ValidateSuffixFunc func(suffix string) bool
+type UnmarshalConfigurationFunc func(in []byte, out interface{}) (err error)
 
 type allConfig struct {
 	Flows map[string]*config.KisFlowConfig
@@ -20,10 +23,10 @@ type allConfig struct {
 	Conns map[string]*config.KisConnConfig
 }
 
-// kisTypeFlowConfigure parses Flow configuration file in yaml format
-func kisTypeFlowConfigure(all *allConfig, confData []byte, fileName string, kisType interface{}) error {
+// kisTypeFlowConfigure parses Flow configuration file in input file format
+func kisTypeFlowConfigure(all *allConfig, confData []byte, fileName string, kisType interface{}, unmarshal UnmarshalConfigurationFunc) error {
 	flowCfg := new(config.KisFlowConfig)
-	if ok := yaml.Unmarshal(confData, flowCfg); ok != nil {
+	if ok := unmarshal(confData, flowCfg); ok != nil {
 		return fmt.Errorf("%s has wrong format kisType = %s", fileName, kisType)
 	}
 
@@ -42,10 +45,10 @@ func kisTypeFlowConfigure(all *allConfig, confData []byte, fileName string, kisT
 	return nil
 }
 
-// kisTypeFuncConfigure parses Function configuration file in yaml format
-func kisTypeFuncConfigure(all *allConfig, confData []byte, fileName string, kisType interface{}) error {
+// kisTypeFuncConfigure parses Function configuration file in input file format
+func kisTypeFuncConfigure(all *allConfig, confData []byte, fileName string, kisType interface{}, unmarshal UnmarshalConfigurationFunc) error {
 	function := new(config.KisFuncConfig)
-	if ok := yaml.Unmarshal(confData, function); ok != nil {
+	if ok := unmarshal(confData, function); ok != nil {
 		return fmt.Errorf("%s has wrong format kisType = %s", fileName, kisType)
 	}
 	if _, ok := all.Funcs[function.FName]; ok {
@@ -58,10 +61,10 @@ func kisTypeFuncConfigure(all *allConfig, confData []byte, fileName string, kisT
 	return nil
 }
 
-// kisTypeConnConfigure parses Connector configuration file in yaml format
-func kisTypeConnConfigure(all *allConfig, confData []byte, fileName string, kisType interface{}) error {
+// kisTypeConnConfigure parses Connector configuration file in input file format
+func kisTypeConnConfigure(all *allConfig, confData []byte, fileName string, kisType interface{}, unmarshal UnmarshalConfigurationFunc) error {
 	conn := new(config.KisConnConfig)
-	if ok := yaml.Unmarshal(confData, conn); ok != nil {
+	if ok := unmarshal(confData, conn); ok != nil {
 		return fmt.Errorf("%s has wrong format kisType = %s", fileName, kisType)
 	}
 
@@ -75,10 +78,10 @@ func kisTypeConnConfigure(all *allConfig, confData []byte, fileName string, kisT
 	return nil
 }
 
-// kisTypeGlobalConfigure parses Global configuration file in yaml format
-func kisTypeGlobalConfigure(confData []byte, fileName string, kisType interface{}) error {
+// kisTypeGlobalConfigure parses Global configuration file in input file format
+func kisTypeGlobalConfigure(confData []byte, fileName string, kisType interface{}, unmarshal UnmarshalConfigurationFunc) error {
 	// Global configuration
-	if ok := yaml.Unmarshal(confData, config.GlobalConfig); ok != nil {
+	if ok := unmarshal(confData, config.GlobalConfig); ok != nil {
 		return fmt.Errorf("%s is wrong format kisType = %s", fileName, kisType)
 	}
 
@@ -88,8 +91,8 @@ func kisTypeGlobalConfigure(confData []byte, fileName string, kisType interface{
 	return nil
 }
 
-// parseConfigWalkYaml recursively parses all configuration files in yaml format and stores the configuration information in allConfig
-func parseConfigWalkYaml(loadPath string) (*allConfig, error) {
+// parseConfigWalk recursively parses all configuration files in all format and stores the configuration information in allConfig
+func parseConfigWalk(loadPath string, validator ValidateSuffixFunc, unmarshaler UnmarshalConfigurationFunc) (*allConfig, error) {
 
 	all := new(allConfig)
 
@@ -99,7 +102,7 @@ func parseConfigWalkYaml(loadPath string) (*allConfig, error) {
 
 	err := filepath.Walk(loadPath, func(filePath string, info os.FileInfo, err error) error {
 		// Validate the file extension
-		if suffix := path.Ext(filePath); suffix != ".yml" && suffix != ".yaml" {
+		if suffix := path.Ext(filePath); validator(suffix) {
 			return nil
 		}
 
@@ -111,8 +114,8 @@ func parseConfigWalkYaml(loadPath string) (*allConfig, error) {
 
 		confMap := make(map[string]interface{})
 
-		// Validate yaml format
-		if err := yaml.Unmarshal(confData, confMap); err != nil {
+		// Validate input file format
+		if err = unmarshaler(confData, confMap); err != nil {
 			return err
 		}
 
@@ -126,16 +129,16 @@ func parseConfigWalkYaml(loadPath string) (*allConfig, error) {
 
 		switch kisType {
 		case common.KisIDTypeFlow:
-			return kisTypeFlowConfigure(all, confData, filePath, kisType)
+			return kisTypeFlowConfigure(all, confData, filePath, kisType, unmarshaler)
 
 		case common.KisIDTypeFunction:
-			return kisTypeFuncConfigure(all, confData, filePath, kisType)
+			return kisTypeFuncConfigure(all, confData, filePath, kisType, unmarshaler)
 
 		case common.KisIDTypeConnector:
-			return kisTypeConnConfigure(all, confData, filePath, kisType)
+			return kisTypeConnConfigure(all, confData, filePath, kisType, unmarshaler)
 
 		case common.KisIDTypeGlobal:
-			return kisTypeGlobalConfigure(confData, filePath, kisType)
+			return kisTypeGlobalConfigure(confData, filePath, kisType, unmarshaler)
 
 		default:
 			return fmt.Errorf("%s set wrong kistype %s", filePath, kisType)
@@ -175,9 +178,41 @@ func buildFlow(all *allConfig, fp config.KisFlowFunctionParam, newFlow kis.Flow,
 }
 
 // ConfigImportYaml recursively parses all configuration files in yaml format
+// Deprecated
 func ConfigImportYaml(loadPath string) error {
 
-	all, err := parseConfigWalkYaml(loadPath)
+	all, err := parseConfigWalk(loadPath, func(suffix string) bool {
+		if suffix != ".yml" && suffix != ".yaml" {
+			return false
+		}
+		return true
+	}, yaml.Unmarshal)
+	if err != nil {
+		return err
+	}
+
+	for flowName, flowConfig := range all.Flows {
+
+		// Build a new Flow
+		newFlow := flow.NewKisFlow(flowConfig)
+
+		for _, fp := range flowConfig.Flows {
+			if err := buildFlow(all, fp, newFlow, flowName); err != nil {
+				return err
+			}
+		}
+
+		// Add the flow to FlowPool
+		kis.Pool().AddFlow(flowName, newFlow)
+	}
+
+	return nil
+}
+
+// ConfigImport recursively parses all configuration files in all format
+func ConfigImport(loadPath string, validator ValidateSuffixFunc, unmarshaler UnmarshalConfigurationFunc) error {
+
+	all, err := parseConfigWalk(loadPath, validator, unmarshaler)
 	if err != nil {
 		return err
 	}

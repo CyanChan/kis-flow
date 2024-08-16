@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"testing"
 	"time"
 
@@ -13,7 +14,12 @@ import (
 func TestMetricsDataTotal(t *testing.T) {
 	ctx := context.Background()
 
-	if err := file.ConfigImportYaml("load_conf/"); err != nil {
+	if err := file.ConfigImport("load_conf/", func(suffix string) bool {
+		if suffix != ".yml" && suffix != ".yaml" {
+			return false
+		}
+		return true
+	}, yaml.Unmarshal); err != nil {
 		fmt.Println("Wrong Config Yaml Path!")
 		panic(err)
 	}

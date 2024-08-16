@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"testing"
 
 	"github.com/aceld/kis-flow/common"
@@ -16,7 +17,12 @@ func TestForkFlow(t *testing.T) {
 	ctx := context.Background()
 
 	// 1. Load configuration file and build Flow
-	if err := file.ConfigImportYaml("load_conf/"); err != nil {
+	if err := file.ConfigImport("load_conf/", func(suffix string) bool {
+		if suffix != ".yml" && suffix != ".yaml" {
+			return false
+		}
+		return true
+	}, yaml.Unmarshal); err != nil {
 		panic(err)
 	}
 

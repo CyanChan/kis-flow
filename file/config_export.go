@@ -11,6 +11,7 @@ import (
 )
 
 // ConfigExportYaml exports the flow configuration and saves it locally
+// Deprecated
 func ConfigExportYaml(flow kis.Flow, savePath string) error {
 
 	var data []byte
@@ -51,6 +52,62 @@ func ConfigExportYaml(flow kis.Flow, savePath string) error {
 			}
 
 			cdata, err := yaml.Marshal(cConf)
+			if err != nil {
+				return err
+			}
+
+			if err := os.WriteFile(savePath+common.KisIDTypeConnector+"-"+cConf.CName+".yaml", cdata, 0644); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+type MarshalFunc func(v any) ([]byte, error)
+
+// ConfigExport exports the flow configuration and saves it locally
+func ConfigExport(flow kis.Flow, savePath string, marshaller MarshalFunc) error {
+
+	var data []byte
+	var err error
+
+	data, err = marshaller(flow.GetConfig())
+	if err != nil {
+		return err
+	}
+
+	// flow
+	err = os.WriteFile(savePath+common.KisIDTypeFlow+"-"+flow.GetName()+".toml", data, 0644)
+	if err != nil {
+		return err
+	}
+
+	// function
+	for _, fp := range flow.GetConfig().Flows {
+		fConf := flow.GetFuncConfigByName(fp.FuncName)
+		if fConf == nil {
+			return fmt.Errorf("function name = %s config is nil ", fp.FuncName)
+		}
+
+		fData, err := marshaller(fConf)
+		if err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(savePath+common.KisIDTypeFunction+"-"+fp.FuncName+".yaml", fData, 0644); err != nil {
+			return err
+		}
+
+		// Connector
+		if fConf.Option.CName != "" {
+			cConf, err := fConf.GetConnConfig()
+			if err != nil {
+				return err
+			}
+
+			cdata, err := marshaller(cConf)
 			if err != nil {
 				return err
 			}
