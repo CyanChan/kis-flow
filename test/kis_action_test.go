@@ -18,7 +18,7 @@ func TestActionAbort(t *testing.T) {
 		if suffix != ".yml" && suffix != ".yaml" {
 			return true
 		}
-		return true
+		return false
 	}, yaml.Unmarshal); err != nil {
 		fmt.Println("Wrong Config Yaml Path!")
 		panic(err)
@@ -46,7 +46,7 @@ func TestActionDataReuse(t *testing.T) {
 		if suffix != ".yml" && suffix != ".yaml" {
 			return true
 		}
-		return true
+		return false
 	}, yaml.Unmarshal); err != nil {
 		fmt.Println("Wrong Config Yaml Path!")
 		panic(err)
@@ -74,7 +74,7 @@ func TestActionForceEntry(t *testing.T) {
 		if suffix != ".yml" && suffix != ".yaml" {
 			return true
 		}
-		return true
+		return false
 	}, yaml.Unmarshal); err != nil {
 		fmt.Println("Wrong Config Yaml Path!")
 		panic(err)
@@ -102,7 +102,7 @@ func TestActionJumpFunc(t *testing.T) {
 		if suffix != ".yml" && suffix != ".yaml" {
 			return true
 		}
-		return true
+		return false
 	}, yaml.Unmarshal); err != nil {
 		fmt.Println("Wrong Config Yaml Path!")
 		panic(err)

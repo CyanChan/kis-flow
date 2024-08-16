@@ -14,7 +14,7 @@ import (
 	"github.com/aceld/kis-flow/metrics"
 )
 
-type ValidateSuffixFunc func(suffix string) bool
+type ValidateNoTargetSuffixFunc func(suffix string) bool
 type UnmarshalConfigurationFunc func(in []byte, out interface{}) (err error)
 
 type allConfig struct {
@@ -92,7 +92,7 @@ func kisTypeGlobalConfigure(confData []byte, fileName string, kisType interface{
 }
 
 // parseConfigWalk recursively parses all configuration files in all format and stores the configuration information in allConfig
-func parseConfigWalk(loadPath string, validator ValidateSuffixFunc, unmarshaler UnmarshalConfigurationFunc) (*allConfig, error) {
+func parseConfigWalk(loadPath string, validator ValidateNoTargetSuffixFunc, unmarshaler UnmarshalConfigurationFunc) (*allConfig, error) {
 
 	all := new(allConfig)
 
@@ -185,7 +185,7 @@ func ConfigImportYaml(loadPath string) error {
 		if suffix != ".yml" && suffix != ".yaml" {
 			return true
 		}
-		return true
+		return false
 	}, yaml.Unmarshal)
 	if err != nil {
 		return err
@@ -210,7 +210,7 @@ func ConfigImportYaml(loadPath string) error {
 }
 
 // ConfigImport recursively parses all configuration files in all format
-func ConfigImport(loadPath string, validator ValidateSuffixFunc, unmarshaler UnmarshalConfigurationFunc) error {
+func ConfigImport(loadPath string, validator ValidateNoTargetSuffixFunc, unmarshaler UnmarshalConfigurationFunc) error {
 
 	all, err := parseConfigWalk(loadPath, validator, unmarshaler)
 	if err != nil {

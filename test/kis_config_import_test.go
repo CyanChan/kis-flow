@@ -17,7 +17,7 @@ func TestConfigImportYaml(t *testing.T) {
 		if suffix != ".yml" && suffix != ".yaml" {
 			return true
 		}
-		return true
+		return false
 	}, yaml.Unmarshal); err != nil {
 		panic(err)
 	}
