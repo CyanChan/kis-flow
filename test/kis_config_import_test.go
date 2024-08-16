@@ -15,7 +15,7 @@ func TestConfigImportYaml(t *testing.T) {
 	// 1. Load the configuration file and build the Flow
 	if err := file.ConfigImport("load_conf/", func(suffix string) bool {
 		if suffix != ".yml" && suffix != ".yaml" {
-			return false
+			return true
 		}
 		return true
 	}, yaml.Unmarshal); err != nil {

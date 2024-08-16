@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"os"
 	"testing"
 
 	"github.com/aceld/kis-flow/file"
@@ -15,10 +14,9 @@ func TestActionAbort(t *testing.T) {
 	ctx := context.Background()
 
 	// 1. Load the configuration file and build the Flow
-	wd, _ := os.Getwd()
-	if err := file.ConfigImport(wd+"/load_conf/", func(suffix string) bool {
+	if err := file.ConfigImport("load_conf/", func(suffix string) bool {
 		if suffix != ".yml" && suffix != ".yaml" {
-			return false
+			return true
 		}
 		return true
 	}, yaml.Unmarshal); err != nil {
@@ -46,7 +44,7 @@ func TestActionDataReuse(t *testing.T) {
 	// 1. Load the configuration file and build the Flow
 	if err := file.ConfigImport("load_conf/", func(suffix string) bool {
 		if suffix != ".yml" && suffix != ".yaml" {
-			return false
+			return true
 		}
 		return true
 	}, yaml.Unmarshal); err != nil {
@@ -74,7 +72,7 @@ func TestActionForceEntry(t *testing.T) {
 	// 1. Load the configuration file and build the Flow
 	if err := file.ConfigImport("load_conf/", func(suffix string) bool {
 		if suffix != ".yml" && suffix != ".yaml" {
-			return false
+			return true
 		}
 		return true
 	}, yaml.Unmarshal); err != nil {
@@ -102,7 +100,7 @@ func TestActionJumpFunc(t *testing.T) {
 	// 1. Load the configuration file and build the Flow
 	if err := file.ConfigImport("load_conf/", func(suffix string) bool {
 		if suffix != ".yml" && suffix != ".yaml" {
-			return false
+			return true
 		}
 		return true
 	}, yaml.Unmarshal); err != nil {

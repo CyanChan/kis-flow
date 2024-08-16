@@ -183,7 +183,7 @@ func ConfigImportYaml(loadPath string) error {
 
 	all, err := parseConfigWalk(loadPath, func(suffix string) bool {
 		if suffix != ".yml" && suffix != ".yaml" {
-			return false
+			return true
 		}
 		return true
 	}, yaml.Unmarshal)

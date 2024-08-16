@@ -16,7 +16,7 @@ func TestMetricsDataTotal(t *testing.T) {
 
 	if err := file.ConfigImport("load_conf/", func(suffix string) bool {
 		if suffix != ".yml" && suffix != ".yaml" {
-			return false
+			return true
 		}
 		return true
 	}, yaml.Unmarshal); err != nil {
